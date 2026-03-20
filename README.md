@@ -8,11 +8,11 @@
 ## 📸 Screenshots
 
 ### Efficient Frontier — Random Portfolio Simulation
-![Efficient Frontier](screenshots/efficient_frontier.png)
+![Efficient Frontier](Screenshots/efficient_frontier.png)
 *3,000 randomly generated portfolios coloured by Sharpe ratio. The white curve is the efficient frontier. Special portfolios marked: Max Sharpe ⭐ (gold), Min Volatility 🛡️ (cyan), Equal Weight ⚖️ (orange).*
 
 ### Stock Analysis — Correlation Matrix & Normalised Performance
-![Stock Analysis](screenshots/stock_analysis.png)
+![Stock Analysis](Screenshots/stock_analysis.png)
 *Correlation heatmap of all 10 NSE stocks + normalised price performance chart indexed to 100 at start date. Reveals diversification opportunities and relative stock performance.*
 
 ---
