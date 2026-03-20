@@ -28,6 +28,7 @@ st.set_page_config(
     page_title="Markowitz Portfolio Optimiser",
     layout="wide",
     page_icon="📊",
+    initial_sidebar_state="expanded",
 )
 
 STOCK_OPTIONS = [
@@ -49,6 +50,8 @@ def _plotly_bg(fig: go.Figure) -> go.Figure:
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
+        title_font_size=16,
+        margin=dict(t=60, b=40, l=40, r=40),
     )
     return fig
 
@@ -117,8 +120,7 @@ if "opt_results" not in st.session_state:
     st.session_state["opt_results"] = None
 
 
-st.sidebar.header("Portfolio Settings")
-
+st.sidebar.subheader("📈 Universe Selection")
 selected_stocks = st.sidebar.multiselect(
     "Select Stocks",
     options=STOCK_OPTIONS,
@@ -128,6 +130,8 @@ selected_stocks = st.sidebar.multiselect(
 start_date = st.sidebar.date_input("Start Date", value=date(2020, 1, 1))
 end_date = st.sidebar.date_input("End Date", value=date(2025, 1, 1))
 
+st.sidebar.divider()
+st.sidebar.subheader("⚙️ Optimisation Settings")
 risk_free_rate = st.sidebar.number_input(
     "Risk-Free Rate (India 10Y)",
     value=0.067,
@@ -149,11 +153,33 @@ optimisation_goal = st.sidebar.radio(
     index=0,
 )
 
-
+st.sidebar.info("💡 Tip: Select at least 5 stocks for meaningful diversification.")
 clicked = st.sidebar.button("Optimise Portfolio")
 
-st.title("📊 Markowitz Portfolio Optimiser")
-st.subheader("Mean-Variance Optimisation on Indian NSE Stocks")
+st.sidebar.divider()
+st.sidebar.caption("Roy Harwani · NIT Warangal")
+st.sidebar.markdown(
+    "[GitHub](https://github.com/royharwani) | [LinkedIn](https://www.linkedin.com/in/royharwani/)"
+)
+
+col_left, col_right = st.columns([2, 1])
+with col_left:
+    st.title("📊 Markowitz Portfolio Optimiser")
+    st.subheader("Mean-Variance Optimisation on Indian NSE Stocks")
+
+with col_right:
+    with st.expander("📖 About This Tool"):
+        st.markdown(
+            "This app implements Harry Markowitz's Modern Portfolio Theory (1952) — "
+            "the work that earned him the Nobel Prize in Economics.\n\n"
+            "The core insight: diversification reduces risk without sacrificing return.\n"
+            "By combining assets with low correlation, you can construct a portfolio "
+            "that sits on the 'efficient frontier' — the set of portfolios offering "
+            "maximum return for a given level of risk.\n\n"
+            "This app fetches real historical data from NSE-listed Indian stocks via "
+            "yfinance, runs thousands of simulated portfolios, and finds the optimal "
+            "allocation using constrained mathematical optimisation (SLSQP solver)."
+        )
 
 if clicked:
     if end_date <= start_date:
@@ -227,14 +253,24 @@ if clicked:
                     "corr_matrix": corr_matrix,
                     "normalized_prices": normalized_prices,
                 }
-                st.success("Optimisation complete.")
+                st.success(f"✅ Optimisation complete — {n_portfolios:,} portfolios simulated")
             except Exception as e:
                 st.session_state["opt_results"] = None
                 st.error(f"Failed to optimise: {e}")
 
 
 if not st.session_state["opt_results"]:
-    st.info("Select stocks and click `Optimise Portfolio` to see results.")
+    st.info(
+        "👆 Select your stock universe and click **Optimise Portfolio** to compute "
+        "the efficient frontier and optimal allocations."
+    )
+    st.markdown(
+        "| Strategy | Goal | Best For |\n"
+        "|---|---|---|\n"
+        "| Max Sharpe ⭐ | Highest risk-adjusted return | Most investors |\n"
+        "| Min Volatility 🛡️ | Lowest possible risk | Risk-averse investors |\n"
+        "| Equal Weight ⚖️ | Simple diversification | Baseline comparison |"
+    )
     st.stop()
 
 
@@ -316,9 +352,15 @@ with tabs[0]:
             "The white curve is the efficient frontier under a target-return constraint."
         )
 
+    st.markdown("---")
     st.plotly_chart(
         _weights_bar_chart(tickers, np.asarray(chosen["weights"], dtype=float), title="Portfolio Weights"),
         use_container_width=True,
+    )
+    st.info(
+        "**Reading the frontier:** Portfolios on the curve are 'efficient' — "
+        "no other portfolio offers higher return for the same risk. "
+        "Portfolios inside the curve are suboptimal."
     )
     with st.expander("How to interpret the selected weights"):
         st.write(
@@ -330,6 +372,10 @@ with tabs[0]:
 
 with tabs[1]:
     st.subheader("Portfolio Metrics")
+    st.markdown(
+        "Comparing all three strategies across key risk and return metrics. "
+        "Backtest period matches your selected date range."
+    )
 
     def _ensure_weights_vector(w: np.ndarray) -> np.ndarray:
         w = np.asarray(w, dtype=float).reshape(-1)
@@ -375,8 +421,11 @@ with tabs[1]:
 
     df_metrics = pd.DataFrame(metrics_dict)
     st.dataframe(df_metrics, use_container_width=True)
-
-    st.subheader("Cumulative Returns Backtest")
+    st.markdown("---")
+    st.markdown("**📈 Cumulative Returns Backtest vs Nifty 50**")
+    st.caption(
+        "Simulated backtest using historical data. Past performance does not guarantee future results."
+    )
 
     # Portfolio cumulative returns for all three portfolios plus Nifty 50.
     fig = go.Figure()
@@ -388,13 +437,14 @@ with tabs[1]:
 
     fig.update_layout(
         template="plotly_dark",
-        title="Cumulative Returns Backtest",
+        title="Cumulative Returns Backtest vs Nifty 50",
         xaxis_title="Date",
         yaxis_title="Cumulative Return",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         legend_title_text="Series",
     )
+    _plotly_bg(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     with st.expander("Financial explanation"):
@@ -409,6 +459,10 @@ with tabs[1]:
 
 with tabs[2]:
     st.subheader("Stock Analysis")
+    st.markdown(
+        "**Understanding your universe** — correlation, relative performance, and "
+        "return distributions of selected stocks."
+    )
 
     st.header("Stock Return Correlation Matrix")
     corr = results["corr_matrix"]
@@ -423,6 +477,10 @@ with tabs[2]:
     )
     _plotly_bg(fig_corr)
     st.plotly_chart(fig_corr, use_container_width=True)
+    st.caption(
+        "Lower correlation between stocks = better diversification potential. "
+        "Values close to 1.0 indicate stocks that move together."
+    )
     with st.expander("What correlation tells you"):
         st.write(
             "Correlation measures how similarly two stocks move in returns. "
@@ -465,6 +523,7 @@ with tabs[2]:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
+    _plotly_bg(fig_hist)
     st.plotly_chart(fig_hist, use_container_width=True)
     with st.expander("How to read the histograms"):
         st.write(
@@ -480,7 +539,10 @@ with tabs[3]:
         st.info("No stocks selected.")
         st.stop()
 
-    st.write("Adjust allocations (long-only). The weights are normalised to sum to 1.")
+    st.markdown(
+        "Manually allocate weights across your selected stocks and see how "
+        "your custom portfolio compares to the optimised strategies in real time."
+    )
 
     # Default equal-weight slider values.
     default_percent = int(round(100 / len(tickers)))
@@ -528,7 +590,9 @@ with tabs[3]:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
+    _plotly_bg(pie_fig)
     st.plotly_chart(pie_fig, use_container_width=True)
+    st.caption("Weights are automatically normalised to sum to 100%.")
 
     with st.expander("How to interpret the allocation pie"):
         st.write(
