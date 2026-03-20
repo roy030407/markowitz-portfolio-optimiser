@@ -64,16 +64,18 @@ markowitz-portfolio-optimiser/
 ## 📐 Mathematical Foundation
 
 **Portfolio Return & Volatility:**
-$$\mu_p = \mathbf{w}^\top \boldsymbol{\mu}, \quad \sigma_p = \sqrt{\mathbf{w}^\top \Sigma \mathbf{w}}$$
+- Expected Return: μ_p = wᵀμ
+- Portfolio Volatility: σ_p = sqrt(wᵀΣw)
 
 **Sharpe Ratio:**
-$$S = \frac{\mu_p - r_f}{\sigma_p}$$
+- S = (μ_p - r_f) / σ_p
 
 **Max Sharpe Optimisation (SLSQP):**
-$$\max_{\mathbf{w}} \frac{\mathbf{w}^\top\boldsymbol{\mu} - r_f}{\sqrt{\mathbf{w}^\top\Sigma\mathbf{w}}} \quad \text{s.t.} \quad \sum w_i = 1,\ w_i \geq 0$$
+- Maximise (wᵀμ - r_f) / sqrt(wᵀΣw)
+- Subject to: sum(w_i) = 1, w_i >= 0 (no short selling)
 
 **Value at Risk (Historical, 95%):**
-$$\text{VaR}_{95\%} = -\text{Percentile}(r_p, 5)$$
+- VaR_95% = -Percentile(r_p, 5)
 
 ---
 
